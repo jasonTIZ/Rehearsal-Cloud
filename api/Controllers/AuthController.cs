@@ -1,5 +1,5 @@
-using api.Data;  // Asegúrate de importar ApplicationDbContext desde el espacio de nombres adecuado
-using api.Models;  // Para la clase User
+using api.Data;
+using api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
@@ -28,7 +28,6 @@ namespace api.Controllers
                 return BadRequest("El nombre de usuario o correo electrónico ya está en uso.");
             }
 
-            // Hash de la contraseña
             using var hmac = new HMACSHA256();
             user.PasswordHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(user.PasswordHash)));
 
@@ -48,7 +47,6 @@ namespace api.Controllers
                 return Unauthorized("Usuario no encontrado.");
             }
 
-            // Verificar el hash de la contraseña
             using var hmac = new HMACSHA256();
             var computedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(loginRequest.PasswordHash)));
 
@@ -64,8 +62,32 @@ namespace api.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _context.Users.ToListAsync();
+            var users = await _context.Users
+                .Select(u => new 
+                {
+                    u.Id,
+                    u.Username,
+                    u.Email
+                })
+                .ToListAsync();
+
             return Ok(users);
+        }
+
+        // DELETE: api/Auth/users/{id}
+        [HttpDelete("users/{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound("Usuario no encontrado.");
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok($"Usuario con ID {id} eliminado exitosamente.");
         }
     }
 }
