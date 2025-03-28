@@ -13,6 +13,7 @@ namespace api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly byte[] _key = Encoding.UTF8.GetBytes("your-secret-key"); // Clave secreta fija
 
         public AuthController(ApplicationDbContext context)
         {
@@ -28,7 +29,7 @@ namespace api.Controllers
                 return BadRequest("El nombre de usuario o correo electrónico ya está en uso.");
             }
 
-            using var hmac = new HMACSHA256();
+            using var hmac = new HMACSHA256(_key); // Usar la clave secreta fija
             user.PasswordHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(user.PasswordHash)));
 
             _context.Users.Add(user);
@@ -47,7 +48,7 @@ namespace api.Controllers
                 return Unauthorized("Usuario no encontrado.");
             }
 
-            using var hmac = new HMACSHA256();
+            using var hmac = new HMACSHA256(_key); // Usar la misma clave secreta fija
             var computedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(loginRequest.PasswordHash)));
 
             if (computedHash != user.PasswordHash)
