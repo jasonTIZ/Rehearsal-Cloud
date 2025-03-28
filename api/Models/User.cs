@@ -1,10 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace api.Models
 {
     public class User
     {
         public int Id { get; set; }
+
+        [Required]
+        [MaxLength(50)]
         public string Username { get; set; }
-        public string PasswordHash { get; set; }  // Cambié de Password a PasswordHash
-        public string Email { get; set; }  // Agregado campo Email
+
+        [Required]
+        [MaxLength(256)]
+        public string PasswordHash { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        public string Email { get; set; }
     }
 }
