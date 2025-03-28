@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Moviles\\Rehearsal-Cloud\\api\\api.csproj": {}
+    "C:\\UNA\\Ingenieria en Sistemas\\I Cuatri 2025\\Moviles\\Proyecto\\Rehearsal-Cloud\\api\\api.csproj": {}
   },
   "projects": {
-    "D:\\Moviles\\Rehearsal-Cloud\\api\\api.csproj": {
+    "C:\\UNA\\Ingenieria en Sistemas\\I Cuatri 2025\\Moviles\\Proyecto\\Rehearsal-Cloud\\api\\api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Moviles\\Rehearsal-Cloud\\api\\api.csproj",
+        "projectUniqueName": "C:\\UNA\\Ingenieria en Sistemas\\I Cuatri 2025\\Moviles\\Proyecto\\Rehearsal-Cloud\\api\\api.csproj",
         "projectName": "api",
-        "projectPath": "D:\\Moviles\\Rehearsal-Cloud\\api\\api.csproj",
-        "packagesPath": "C:\\Users\\valer\\.nuget\\packages\\",
-        "outputPath": "D:\\Moviles\\Rehearsal-Cloud\\api\\obj\\",
+        "projectPath": "C:\\UNA\\Ingenieria en Sistemas\\I Cuatri 2025\\Moviles\\Proyecto\\Rehearsal-Cloud\\api\\api.csproj",
+        "packagesPath": "C:\\Users\\Yeiler\\.nuget\\packages\\",
+        "outputPath": "C:\\UNA\\Ingenieria en Sistemas\\I Cuatri 2025\\Moviles\\Proyecto\\Rehearsal-Cloud\\api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\valer\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Yeiler\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -87,7 +87,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.407/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
