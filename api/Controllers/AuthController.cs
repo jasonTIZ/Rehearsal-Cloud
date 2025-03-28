@@ -1,4 +1,6 @@
 using api.Data;
+using api.Dtos.User;
+using api.Mappers;
 using api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,15 +24,17 @@ namespace api.Controllers
 
         // POST: api/Auth/register
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] User user)
+        public async Task<IActionResult> Register([FromBody] CreateUserRequestDto createUserRequest)
         {
-            if (await _context.Users.AnyAsync(u => u.Username == user.Username || u.Email == user.Email))
+            if (await _context.Users.AnyAsync(u => u.Username == createUserRequest.Username || u.Email == createUserRequest.Email))
             {
                 return BadRequest("El nombre de usuario o correo electrónico ya está en uso.");
             }
 
-            using var hmac = new HMACSHA256(_key); // Usar la clave secreta fija
-            user.PasswordHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(user.PasswordHash)));
+            using var hmac = new HMACSHA256(_key);
+            var passwordHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(createUserRequest.Password)));
+
+            var user = createUserRequest.ToUserFromCreateDto(passwordHash);
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -40,7 +44,7 @@ namespace api.Controllers
 
         // POST: api/Auth/login
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] User loginRequest)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequest)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == loginRequest.Username);
             if (user == null)
@@ -48,8 +52,8 @@ namespace api.Controllers
                 return Unauthorized("Usuario no encontrado.");
             }
 
-            using var hmac = new HMACSHA256(_key); // Usar la misma clave secreta fija
-            var computedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(loginRequest.PasswordHash)));
+            using var hmac = new HMACSHA256(_key);
+            var computedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(loginRequest.Password)));
 
             if (computedHash != user.PasswordHash)
             {
@@ -64,31 +68,34 @@ namespace api.Controllers
         public async Task<IActionResult> GetUsers()
         {
             var users = await _context.Users
-                .Select(u => new 
-                {
-                    u.Id,
-                    u.Username,
-                    u.Email
-                })
+                .Select(u => u.ToDto())
                 .ToListAsync();
 
             return Ok(users);
         }
 
-        // DELETE: api/Auth/users/{id}
-        [HttpDelete("users/{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+       // DELETE: api/Auth/users/{id}
+[HttpDelete("users/{id}")]
+public async Task<IActionResult> DeleteUser(int id)
+{
+    var user = await _context.Users.FindAsync(id);
+    if (user == null)
+    {
+        return NotFound(new DeleteUserRequestDto
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound("Usuario no encontrado.");
-            }
+            Id = id,
+            Message = "Usuario no encontrado."
+        });
+    }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+    _context.Users.Remove(user);
+    await _context.SaveChangesAsync();
 
-            return Ok($"Usuario con ID {id} eliminado exitosamente.");
-        }
+    return Ok(new DeleteUserRequestDto
+    {
+        Id = id,
+        Message = $"Usuario con ID {id} eliminado exitosamente."
+    });
+}
     }
 }
