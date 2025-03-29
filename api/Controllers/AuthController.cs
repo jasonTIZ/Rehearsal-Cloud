@@ -23,24 +23,29 @@ namespace api.Controllers
         }
 
         // POST: api/Auth/register
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] CreateUserRequestDto createUserRequest)
-        {
-            if (await _context.Users.AnyAsync(u => u.Username == createUserRequest.Username || u.Email == createUserRequest.Email))
-            {
-                return BadRequest("El nombre de usuario o correo electrónico ya está en uso.");
-            }
+      [HttpPost("register")]
+public async Task<IActionResult> Register([FromBody] CreateUserRequestDto createUserRequest)
+{
+    if (createUserRequest.Password.Length < 8)
+    {
+        return BadRequest("La contraseña debe tener al menos 8 caracteres.");
+    }
 
-            using var hmac = new HMACSHA256(_key);
-            var passwordHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(createUserRequest.Password)));
+    if (await _context.Users.AnyAsync(u => u.Username == createUserRequest.Username || u.Email == createUserRequest.Email))
+    {
+        return BadRequest("El nombre de usuario o correo electrónico ya está en uso.");
+    }
 
-            var user = createUserRequest.ToUserFromCreateDto(passwordHash);
+    using var hmac = new HMACSHA256(_key);
+    var passwordHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(createUserRequest.Password)));
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+    var user = createUserRequest.ToUserFromCreateDto(passwordHash);
 
-            return Ok("Usuario registrado exitosamente.");
-        }
+    _context.Users.Add(user);
+    await _context.SaveChangesAsync();
+
+    return Ok("Usuario registrado exitosamente.");
+}
 
         // POST: api/Auth/login
         [HttpPost("login")]
