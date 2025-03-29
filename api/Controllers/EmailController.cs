@@ -19,8 +19,8 @@ namespace api.Controllers
         private readonly ApplicationDbContext _context;
         private readonly string _smtpServer = "smtp.gmail.com"; 
         private readonly int _smtpPort = 587; 
-        private readonly string _smtpUser  = "ejemplo@gmail.com"; 
-        private readonly string _smtpPass = "1234"; 
+        private readonly string _smtpUser  = "yeiler8310@gmail.com";
+        private readonly string _smtpAppPassword = "mnqbgpeaxhuclvha"; 
 
         public EmailController(ApplicationDbContext context)
         {
@@ -37,7 +37,7 @@ namespace api.Controllers
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(_smtpUser ),
+                From = new MailAddress(_smtpUser),
                 Subject = emailDto.Subject,
                 Body = emailDto.Body,
                 IsBodyHtml = true,
@@ -46,7 +46,7 @@ namespace api.Controllers
 
             using (var smtpClient = new SmtpClient(_smtpServer, _smtpPort))
             {
-                smtpClient.Credentials = new NetworkCredential(_smtpUser , _smtpPass);
+                smtpClient.Credentials = new NetworkCredential(_smtpUser, _smtpAppPassword);
                 smtpClient.EnableSsl = true;
 
                 try
