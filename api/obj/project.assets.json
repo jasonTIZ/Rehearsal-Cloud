@@ -5205,19 +5205,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\jeyco\\.nuget\\packages\\": {}
+    "C:\\Users\\valer\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Rehearsal-Cloud\\api\\api.csproj",
+      "projectUniqueName": "D:\\Moviles\\Rehearsal-Cloud\\api\\api.csproj",
       "projectName": "api",
-      "projectPath": "C:\\Rehearsal-Cloud\\api\\api.csproj",
-      "packagesPath": "C:\\Users\\jeyco\\.nuget\\packages\\",
-      "outputPath": "C:\\Rehearsal-Cloud\\api\\obj\\",
+      "projectPath": "D:\\Moviles\\Rehearsal-Cloud\\api\\api.csproj",
+      "packagesPath": "C:\\Users\\valer\\.nuget\\packages\\",
+      "outputPath": "D:\\Moviles\\Rehearsal-Cloud\\api\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\jeyco\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\valer\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -5290,7 +5290,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.407/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
