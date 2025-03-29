@@ -44,7 +44,7 @@ namespace api.Controllers
                 Directory.CreateDirectory(_audioUploadDirectory);
             }
         }
-
+/*
         // POST: api/Song/create-song
         [HttpPost("create-song")]
         public async Task<IActionResult> CreateSong(
@@ -157,7 +157,7 @@ namespace api.Controllers
 
             return Ok("Canción creada, imagen de portada subida y archivos de audio asociados correctamente.");
         }
-
+*/
 
         // GET: api/Song/get-songs
         [HttpGet("get-songs")]
@@ -288,6 +288,8 @@ namespace api.Controllers
                 return StatusCode(500, "Error interno del servidor");
             }
         }
+ 
+/*
         // PUT: api/Song/update-song/{id}
         [HttpPut("update-song/{id}")]
         public async Task<IActionResult> UpdateSong(
@@ -354,6 +356,6 @@ namespace api.Controllers
             await _context.SaveChangesAsync();
 
             return Ok("Canción actualizada correctamente.");
-        }
+        }*/
     }
 }
