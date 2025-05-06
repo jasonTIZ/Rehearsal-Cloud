@@ -19,6 +19,8 @@ namespace api.Data  // El espacio de nombres debe ser 'api.Data'
         public DbSet<Song> Songs { get; set; }
 
         public DbSet<AudioFile> AudioFiles { get; set; }
-
+public DbSet<Customization> Customizations { get; set; }
+public DbSet<CloudStorage> CloudStorages { get; set; }
+public DbSet<Download> Downloads { get; set; }
     }
 }
