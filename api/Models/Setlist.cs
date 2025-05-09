@@ -8,6 +8,7 @@ namespace api.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime Date { get; set; }
-        public ICollection<Song> Songs { get; set; } = new List<Song>();
+        // Many-to-many with Songs
+        public ICollection<SetlistSong> SetlistSongs { get; set; }
     }
 }

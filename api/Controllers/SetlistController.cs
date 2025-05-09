@@ -21,7 +21,8 @@ namespace api.Controllers
         public async Task<IActionResult> GetSetlists()
         {
             var setlists = await _context.Setlists
-                .Include(s => s.Songs)
+                .Include(s => s.SetlistSongs)
+                .ThenInclude(ss => ss.Song)
                 .ToListAsync();
             return Ok(setlists);
         }
@@ -39,22 +40,39 @@ namespace api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateSetlist(int id, [FromBody] Setlist updatedSetlist)
         {
-            var setlist = await _context.Setlists.Include(s => s.Songs).FirstOrDefaultAsync(s => s.Id == id);
+            var setlist = await _context.Setlists
+                .Include(s => s.SetlistSongs)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
             if (setlist == null) return NotFound();
 
+            // Update basic fields
             setlist.Name = updatedSetlist.Name;
-            setlist.Songs = updatedSetlist.Songs;
+            setlist.Date = updatedSetlist.Date;
 
-            _context.Setlists.Update(setlist);
+            // Clear and reset relationships
+            setlist.SetlistSongs.Clear();
+            foreach (var ss in updatedSetlist.SetlistSongs)
+            {
+                setlist.SetlistSongs.Add(new SetlistSong
+                {
+                    SetlistId = setlist.Id,
+                    SongId = ss.SongId,
+                    Order = ss.Order
+                });
+            }
+
             await _context.SaveChangesAsync();
             return Ok(setlist);
         }
-
         // DELETE: api/Setlist/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSetlist(int id)
         {
-            var setlist = await _context.Setlists.Include(s => s.Songs).FirstOrDefaultAsync(s => s.Id == id);
+            var setlist = await _context.Setlists
+                .Include(s => s.SetlistSongs)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
             if (setlist == null) return NotFound();
 
             _context.Setlists.Remove(setlist);

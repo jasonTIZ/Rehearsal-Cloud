@@ -11,20 +11,27 @@ namespace api.Mappers
             {
                 Id = setlist.Id,
                 Name = setlist.Name,
-                Songs = setlist.Songs
-                    .Select(song => song.SongName) // Convertimos ICollection<Song> a List<string>
-                    .ToList()
+                Date = setlist.Date,
+                SongIds = setlist.SetlistSongs?
+            .OrderBy(ss => ss.Order)
+            .Select(static ss => ss.SongId)
+            .ToList()
             };
         }
 
-        public static Setlist ToEntity(SetlistDto setlistDto)
+        public static Setlist ToEntity(SetlistDto dto)
         {
             return new Setlist
             {
-                Id = setlistDto.Id,
-                Name = setlistDto.Name,
-                Songs = setlistDto.Songs
-                    .Select(songName => new Song { SongName = songName }) // Convertimos List<string> a ICollection<Song>
+                Id = dto.Id,
+                Name = dto.Name,
+                Date = dto.Date,
+                SetlistSongs = dto.SongIds
+                    .Select((songId, index) => new SetlistSong
+                    {
+                        SongId = songId,
+                        Order = index
+                    })
                     .ToList()
             };
         }

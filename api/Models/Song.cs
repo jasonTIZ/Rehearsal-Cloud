@@ -12,5 +12,7 @@ namespace api.Models
 
         // Relación con AudioFiles
         public ICollection<AudioFile> AudioFiles { get; set; }
+        // Many-to-many with Setlists
+        public ICollection<SetlistSong> SetlistSongs { get; set; }
     }
 }
