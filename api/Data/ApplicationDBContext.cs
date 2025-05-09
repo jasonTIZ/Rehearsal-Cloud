@@ -22,5 +22,6 @@ namespace api.Data  // El espacio de nombres debe ser 'api.Data'
 public DbSet<Customization> Customizations { get; set; }
 public DbSet<CloudStorage> CloudStorages { get; set; }
 public DbSet<Download> Downloads { get; set; }
+public DbSet<Setlist> Setlists { get; set; }
     }
 }
