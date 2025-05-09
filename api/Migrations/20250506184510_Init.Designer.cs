@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using api.Data;
 
@@ -11,9 +12,11 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250506184510_Init")]
+    partial class Init
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -203,26 +206,6 @@ namespace api.Migrations
                     b.ToTable("Playlists");
                 });
 
-            modelBuilder.Entity("api.Models.Setlist", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Setlists");
-                });
-
             modelBuilder.Entity("api.Models.Song", b =>
                 {
                     b.Property<int>("Id")
@@ -245,9 +228,6 @@ namespace api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("SetlistId")
-                        .HasColumnType("int");
-
                     b.Property<string>("SongName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -257,8 +237,6 @@ namespace api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SetlistId");
 
                     b.ToTable("Songs");
                 });
@@ -341,18 +319,6 @@ namespace api.Migrations
                     b.Navigation("Song");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("api.Models.Song", b =>
-                {
-                    b.HasOne("api.Models.Setlist", null)
-                        .WithMany("Songs")
-                        .HasForeignKey("SetlistId");
-                });
-
-            modelBuilder.Entity("api.Models.Setlist", b =>
-                {
-                    b.Navigation("Songs");
                 });
 
             modelBuilder.Entity("api.Models.Song", b =>
