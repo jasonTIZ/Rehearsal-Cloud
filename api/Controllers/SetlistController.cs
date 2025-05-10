@@ -1,5 +1,7 @@
 using api.Data;
 using api.Models;
+using api.Mappers;
+using api.Dtos.Setlist;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,49 +24,61 @@ namespace api.Controllers
         {
             var setlists = await _context.Setlists
                 .Include(s => s.SetlistSongs)
-                .ThenInclude(ss => ss.Song)
                 .ToListAsync();
-            return Ok(setlists);
+
+            var setlistDtos = setlists.Select(s => s.ToDto()).ToList();
+            return Ok(setlistDtos);
         }
 
         // POST: api/Setlist
         [HttpPost]
-        public async Task<IActionResult> CreateSetlist([FromBody] Setlist setlist)
+        public async Task<IActionResult> CreateSetlist([FromBody] CreateSetlistRequestDto createSetlistDto)
         {
+            var setlist = new Setlist
+            {
+                Name = createSetlistDto.Name,
+                Date = createSetlistDto.Date, // Usar el valor proporcionado
+                SetlistSongs = createSetlistDto.SetlistSongs
+                    .Select((songId, index) => new SetlistSong
+                    {
+                        SongId = songId,
+                        Order = index
+                    })
+                    .ToList()
+            };
+
             _context.Setlists.Add(setlist);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetSetlists), new { id = setlist.Id }, setlist);
+
+            return CreatedAtAction(nameof(GetSetlists), new { id = setlist.Id }, setlist.ToDto());
         }
 
         // PUT: api/Setlist/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateSetlist(int id, [FromBody] Setlist updatedSetlist)
+[HttpPut("{id}")]
+public async Task<IActionResult> UpdateSetlist(int id, [FromBody] CreateSetlistRequestDto updateSetlistDto)
+{
+    var setlist = await _context.Setlists
+        .Include(s => s.SetlistSongs)
+        .FirstOrDefaultAsync(s => s.Id == id);
+
+    if (setlist == null) return NotFound();
+
+    setlist.Name = updateSetlistDto.Name;
+    setlist.Date = updateSetlistDto.Date; // Actualizar el campo Date
+
+    setlist.SetlistSongs.Clear();
+    foreach (var songId in updateSetlistDto.SetlistSongs)
+    {
+        setlist.SetlistSongs.Add(new SetlistSong
         {
-            var setlist = await _context.Setlists
-                .Include(s => s.SetlistSongs)
-                .FirstOrDefaultAsync(s => s.Id == id);
+            SongId = songId,
+            Order = updateSetlistDto.SetlistSongs.IndexOf(songId)
+        });
+    }
 
-            if (setlist == null) return NotFound();
-
-            // Update basic fields
-            setlist.Name = updatedSetlist.Name;
-            setlist.Date = updatedSetlist.Date;
-
-            // Clear and reset relationships
-            setlist.SetlistSongs.Clear();
-            foreach (var ss in updatedSetlist.SetlistSongs)
-            {
-                setlist.SetlistSongs.Add(new SetlistSong
-                {
-                    SetlistId = setlist.Id,
-                    SongId = ss.SongId,
-                    Order = ss.Order
-                });
-            }
-
-            await _context.SaveChangesAsync();
-            return Ok(setlist);
-        }
+    await _context.SaveChangesAsync();
+    return Ok(setlist.ToDto());
+}
         // DELETE: api/Setlist/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSetlist(int id)

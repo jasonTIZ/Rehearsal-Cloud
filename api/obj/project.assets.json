@@ -5309,19 +5309,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\jeyco\\.nuget\\packages\\": {}
+    "C:\\Users\\kinco\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Rehearsal-Cloud-API\\api\\api.csproj",
+      "projectUniqueName": "C:\\Users\\kinco\\OneDrive\\Escritorio\\Aplicaciones Moviles\\Lab#3\\Rehearsal-Cloud\\api\\api.csproj",
       "projectName": "api",
-      "projectPath": "C:\\Rehearsal-Cloud-API\\api\\api.csproj",
-      "packagesPath": "C:\\Users\\jeyco\\.nuget\\packages\\",
-      "outputPath": "C:\\Rehearsal-Cloud-API\\api\\obj\\",
+      "projectPath": "C:\\Users\\kinco\\OneDrive\\Escritorio\\Aplicaciones Moviles\\Lab#3\\Rehearsal-Cloud\\api\\api.csproj",
+      "packagesPath": "C:\\Users\\kinco\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\kinco\\OneDrive\\Escritorio\\Aplicaciones Moviles\\Lab#3\\Rehearsal-Cloud\\api\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\jeyco\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\kinco\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
