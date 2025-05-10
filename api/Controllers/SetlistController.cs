@@ -37,8 +37,8 @@ namespace api.Controllers
             var setlist = new Setlist
             {
                 Name = createSetlistDto.Name,
-                Date = createSetlistDto.Date, // Usar el valor proporcionado
-                SetlistSongs = createSetlistDto.SetlistSongs
+                Date = createSetlistDto.Date,
+                SetlistSongs = (createSetlistDto.SetlistSongs ?? new List<int>())
                     .Select((songId, index) => new SetlistSong
                     {
                         SongId = songId,
@@ -53,32 +53,54 @@ namespace api.Controllers
             return CreatedAtAction(nameof(GetSetlists), new { id = setlist.Id }, setlist.ToDto());
         }
 
-        // PUT: api/Setlist/{id}
-[HttpPut("{id}")]
-public async Task<IActionResult> UpdateSetlist(int id, [FromBody] CreateSetlistRequestDto updateSetlistDto)
-{
-    var setlist = await _context.Setlists
-        .Include(s => s.SetlistSongs)
-        .FirstOrDefaultAsync(s => s.Id == id);
-
-    if (setlist == null) return NotFound();
-
-    setlist.Name = updateSetlistDto.Name;
-    setlist.Date = updateSetlistDto.Date; // Actualizar el campo Date
-
-    setlist.SetlistSongs.Clear();
-    foreach (var songId in updateSetlistDto.SetlistSongs)
-    {
-        setlist.SetlistSongs.Add(new SetlistSong
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateSetlist(int id, [FromBody] CreateSetlistRequestDto updateSetlistDto)
         {
-            SongId = songId,
-            Order = updateSetlistDto.SetlistSongs.IndexOf(songId)
-        });
-    }
+            var setlist = await _context.Setlists
+                .Include(s => s.SetlistSongs)
+                .FirstOrDefaultAsync(s => s.Id == id);
 
-    await _context.SaveChangesAsync();
-    return Ok(setlist.ToDto());
-}
+            if (setlist == null) return NotFound();
+
+            setlist.Name = updateSetlistDto.Name;
+            setlist.Date = updateSetlistDto.Date;
+
+            // Clear current songs
+            setlist.SetlistSongs.Clear();
+
+            // ✅ Only add new ones if the list is not null or empty
+            if (updateSetlistDto.SetlistSongs != null && updateSetlistDto.SetlistSongs.Any())
+            {
+                foreach (var songId in updateSetlistDto.SetlistSongs)
+                {
+                    setlist.SetlistSongs.Add(new SetlistSong
+                    {
+                        SongId = songId,
+                        Order = updateSetlistDto.SetlistSongs.IndexOf(songId)
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(setlist.ToDto());
+        }
+
+        // GET: api/Setlist/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetSetlistById(int id)
+        {
+            var setlist = await _context.Setlists
+                .Include(s => s.SetlistSongs)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (setlist == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(setlist.ToDto());
+        }
+
         // DELETE: api/Setlist/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSetlist(int id)
