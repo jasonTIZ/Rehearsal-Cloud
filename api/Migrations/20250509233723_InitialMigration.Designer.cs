@@ -12,8 +12,8 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250506184510_Init")]
-    partial class Init
+    [Migration("20250509233723_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -185,7 +185,7 @@ namespace api.Migrations
                     b.ToTable("Emails");
                 });
 
-            modelBuilder.Entity("api.Models.Playlist", b =>
+            modelBuilder.Entity("api.Models.Setlist", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -193,17 +193,34 @@ namespace api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
 
-                    b.PrimitiveCollection<string>("Songs")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Playlists");
+                    b.ToTable("Setlists");
+                });
+
+            modelBuilder.Entity("api.Models.SetlistSong", b =>
+                {
+                    b.Property<int>("SetlistId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SongId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("SetlistId", "SongId");
+
+                    b.HasIndex("SongId");
+
+                    b.ToTable("SetlistSong");
                 });
 
             modelBuilder.Entity("api.Models.Song", b =>
@@ -321,9 +338,35 @@ namespace api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("api.Models.SetlistSong", b =>
+                {
+                    b.HasOne("api.Models.Setlist", "Setlist")
+                        .WithMany("SetlistSongs")
+                        .HasForeignKey("SetlistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("api.Models.Song", "Song")
+                        .WithMany("SetlistSongs")
+                        .HasForeignKey("SongId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Setlist");
+
+                    b.Navigation("Song");
+                });
+
+            modelBuilder.Entity("api.Models.Setlist", b =>
+                {
+                    b.Navigation("SetlistSongs");
+                });
+
             modelBuilder.Entity("api.Models.Song", b =>
                 {
                     b.Navigation("AudioFiles");
+
+                    b.Navigation("SetlistSongs");
                 });
 #pragma warning restore 612, 618
         }

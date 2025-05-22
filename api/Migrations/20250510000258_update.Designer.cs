@@ -12,8 +12,8 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250509045436_setlistUpdate")]
-    partial class setlistUpdate
+    [Migration("20250510000258_update")]
+    partial class update
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -185,27 +185,6 @@ namespace api.Migrations
                     b.ToTable("Emails");
                 });
 
-            modelBuilder.Entity("api.Models.Playlist", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.PrimitiveCollection<string>("Songs")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Playlists");
-                });
-
             modelBuilder.Entity("api.Models.Setlist", b =>
                 {
                     b.Property<int>("Id")
@@ -224,6 +203,24 @@ namespace api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Setlists");
+                });
+
+            modelBuilder.Entity("api.Models.SetlistSong", b =>
+                {
+                    b.Property<int>("SetlistId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SongId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("SetlistId", "SongId");
+
+                    b.HasIndex("SongId");
+
+                    b.ToTable("SetlistSong");
                 });
 
             modelBuilder.Entity("api.Models.Song", b =>
@@ -248,9 +245,6 @@ namespace api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("SetlistId")
-                        .HasColumnType("int");
-
                     b.Property<string>("SongName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -260,8 +254,6 @@ namespace api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SetlistId");
 
                     b.ToTable("Songs");
                 });
@@ -346,21 +338,35 @@ namespace api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("api.Models.Song", b =>
+            modelBuilder.Entity("api.Models.SetlistSong", b =>
                 {
-                    b.HasOne("api.Models.Setlist", null)
-                        .WithMany("Songs")
-                        .HasForeignKey("SetlistId");
+                    b.HasOne("api.Models.Setlist", "Setlist")
+                        .WithMany("SetlistSongs")
+                        .HasForeignKey("SetlistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("api.Models.Song", "Song")
+                        .WithMany("SetlistSongs")
+                        .HasForeignKey("SongId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Setlist");
+
+                    b.Navigation("Song");
                 });
 
             modelBuilder.Entity("api.Models.Setlist", b =>
                 {
-                    b.Navigation("Songs");
+                    b.Navigation("SetlistSongs");
                 });
 
             modelBuilder.Entity("api.Models.Song", b =>
                 {
                     b.Navigation("AudioFiles");
+
+                    b.Navigation("SetlistSongs");
                 });
 #pragma warning restore 612, 618
         }
