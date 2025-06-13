@@ -24,16 +24,22 @@ namespace api.Controllers
 
         // POST: api/Auth/register
       [HttpPost("register")]
-public async Task<IActionResult> Register([FromBody] CreateUserRequestDto createUserRequest)
-{
+    public async Task<IActionResult> Register([FromBody] CreateUserRequestDto createUserRequest)
+    {
+
+    if (createUserRequest == null)
+    {
+        return BadRequest(new { message = "El cuerpo de la solicitud no puede estar vacío." });
+    }
+
     if (createUserRequest.Password.Length < 8)
     {
-        return BadRequest("La contraseña debe tener al menos 8 caracteres.");
+        return BadRequest(new { message = "La contraseña debe tener al menos 8 caracteres." });
     }
 
     if (await _context.Users.AnyAsync(u => u.Username == createUserRequest.Username || u.Email == createUserRequest.Email))
     {
-        return BadRequest("El nombre de usuario o correo electrónico ya está en uso.");
+        return BadRequest(new { message = "El nombre de usuario o correo electrónico ya está en uso." });
     }
 
     using var hmac = new HMACSHA256(_key);
@@ -44,8 +50,18 @@ public async Task<IActionResult> Register([FromBody] CreateUserRequestDto create
     _context.Users.Add(user);
     await _context.SaveChangesAsync();
 
-    return Ok("Usuario registrado exitosamente.");
-}
+    var response = new 
+    { 
+        id = user.Id,
+        username = user.Username,
+        email = user.Email,
+        message = "Usuario registrado exitosamente." 
+    };
+    return new JsonResult(response) // Esto asegura que el tipo de contenido sea application/json
+    {
+        StatusCode = StatusCodes.Status200OK // Puedes establecer el código de estado si es necesario
+    };
+    }
 
         // POST: api/Auth/login
         [HttpPost("login")]
@@ -54,7 +70,7 @@ public async Task<IActionResult> Register([FromBody] CreateUserRequestDto create
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == loginRequest.Username);
             if (user == null)
             {
-                return Unauthorized("Usuario no encontrado.");
+                return BadRequest(new { message = "Usuario no encontrado" });
             }
 
             using var hmac = new HMACSHA256(_key);
@@ -62,10 +78,10 @@ public async Task<IActionResult> Register([FromBody] CreateUserRequestDto create
 
             if (computedHash != user.PasswordHash)
             {
-                return Unauthorized("Contraseña incorrecta.");
+                return BadRequest(new { message = "Contraseña incorrecta" });
             }
 
-            return Ok("Inicio de sesión exitoso.");
+            return Ok(new { message = "Inicio de sesion exitoso." });
         }
 
         // GET: api/Auth/users
