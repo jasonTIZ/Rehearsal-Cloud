@@ -30,6 +30,18 @@ namespace api.Controllers
             return Ok(setlistDtos);
         }
 
+        // GET: api/Setlist/SetlistWithSongs
+        [HttpGet("SetlistWithSongs")]
+        public async Task<IActionResult> GetSetlistsWithSongs()
+        {
+            var setlists = await _context.Setlists
+                .Include(s => s.SetlistSongs)
+                .ToListAsync();
+
+            var setlistDtos = setlists.Select(s => s.ToDto()).ToList();
+            return Ok(setlistDtos);
+        }
+
         // POST: api/Setlist
         [HttpPost]
         public async Task<IActionResult> CreateSetlist([FromBody] CreateSetlistRequestDto createSetlistDto)
