@@ -4,6 +4,7 @@ using api.Mappers;
 using api.Dtos.Setlist;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IO.Compression;
 
 namespace api.Controllers
 {
@@ -12,21 +13,22 @@ namespace api.Controllers
     public class SetlistController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public SetlistController(ApplicationDbContext context)
+        public SetlistController(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         // GET: api/Setlist
         [HttpGet]
-        public async Task<IActionResult> GetSetlists()
+        public async Task<IActionResult> GetSetlistsWithoutSongs()
         {
-            var setlists = await _context.Setlists
-                .Include(s => s.SetlistSongs)
-                .ToListAsync();
+            var setlists = await _context.Setlists.ToListAsync();
 
-            var setlistDtos = setlists.Select(s => s.ToDto()).ToList();
+            var setlistDtos = setlists.Select(s => s.ToWithoutSongsDto()).ToList();
+
             return Ok(setlistDtos);
         }
 
@@ -34,39 +36,82 @@ namespace api.Controllers
         [HttpGet("SetlistWithSongs")]
         public async Task<IActionResult> GetSetlistsWithSongs()
         {
+            // Cargar setlists con canciones y archivos de audio
             var setlists = await _context.Setlists
                 .Include(s => s.SetlistSongs)
+                    .ThenInclude(ss => ss.Song)
+                        .ThenInclude(s => s.AudioFiles)
                 .ToListAsync();
 
+            // Crear DTOs para las setlists
             var setlistDtos = setlists.Select(s => s.ToDto()).ToList();
-            return Ok(setlistDtos);
+
+            // Generar archivo .zip con los archivos de audio
+            var zipStream = new MemoryStream();
+            using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+            {
+                foreach (var setlist in setlists)
+                {
+                    foreach (var setlistSong in setlist.SetlistSongs)
+                    {
+                        var song = setlistSong.Song;
+                        if (song?.AudioFiles != null)
+                        {
+                            foreach (var audioFile in song.AudioFiles)
+                            {
+                                // Crear una entrada en el .zip con la estructura: Song_{SongId}/{FileName}
+                                var entryName = $"Song_{song.Id}/{audioFile.FileName}";
+                                var entry = zipArchive.CreateEntry(entryName);
+
+                                // Leer el archivo de audio desde el sistema de archivos
+                                var filePath = Path.Combine(_environment.ContentRootPath, audioFile.FilePath);
+                                if (System.IO.File.Exists(filePath))
+                                {
+                                    using (var fileStream = new System.IO.FileStream(filePath, FileMode.Open, FileAccess.Read))
+                                    using (var entryStream = entry.Open())
+                                    {
+                                        await fileStream.CopyToAsync(entryStream);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Preparar la respuesta
+            zipStream.Seek(0, SeekOrigin.Begin);
+
+            return base.File(
+                zipStream.ToArray(),
+                "application/zip",
+                "SetlistAudioFiles.zip",
+                enableRangeProcessing: true
+            );
         }
 
         // POST: api/Setlist
         [HttpPost]
         public async Task<IActionResult> CreateSetlist([FromBody] CreateSetlistRequestDto createSetlistDto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var setlist = new Setlist
             {
                 Name = createSetlistDto.Name,
                 Date = createSetlistDto.Date,
-                SetlistSongs = (createSetlistDto.SetlistSongs ?? new List<int>())
-                    .Select((songId, index) => new SetlistSong
-                    {
-                        SongId = songId,
-                        Order = index
-                    })
-                    .ToList()
+                SetlistSongs = new List<SetlistSong>() // Vacío al principio
             };
 
             _context.Setlists.Add(setlist);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetSetlists), new { id = setlist.Id }, setlist.ToDto());
+            return CreatedAtAction(nameof(GetSetlistsWithoutSongs), new { id = setlist.Id }, setlist.ToDto());
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateSetlist(int id, [FromBody] CreateSetlistRequestDto updateSetlistDto)
+        public async Task<IActionResult> UpdateSetlist(int id, [FromBody] UpdateSetlistRequestDto updateSetlistDto)
         {
             var setlist = await _context.Setlists
                 .Include(s => s.SetlistSongs)
@@ -77,24 +122,45 @@ namespace api.Controllers
             setlist.Name = updateSetlistDto.Name;
             setlist.Date = updateSetlistDto.Date;
 
-            // Clear current songs
-            setlist.SetlistSongs.Clear();
-
-            // ✅ Only add new ones if the list is not null or empty
-            if (updateSetlistDto.SetlistSongs != null && updateSetlistDto.SetlistSongs.Any())
+            if (updateSetlistDto.SetlistSongs != null)
             {
+                // Primero, eliminar las canciones que no están en la lista nueva
+                var toRemove = setlist.SetlistSongs
+                    .Where(ss => !updateSetlistDto.SetlistSongs.Contains(ss.SongId))
+                    .ToList();
+
+                foreach (var rem in toRemove)
+                {
+                    setlist.SetlistSongs.Remove(rem);
+                }
+
+                // Luego, agregar las canciones nuevas que no existen aún
+                var existingSongIds = setlist.SetlistSongs.Select(ss => ss.SongId).ToHashSet();
+
                 foreach (var songId in updateSetlistDto.SetlistSongs)
                 {
-                    setlist.SetlistSongs.Add(new SetlistSong
+                    if (!existingSongIds.Contains(songId))
                     {
-                        SongId = songId,
-                        Order = updateSetlistDto.SetlistSongs.IndexOf(songId)
-                    });
+                        setlist.SetlistSongs.Add(new SetlistSong
+                        {
+                            SetlistId = id,
+                            SongId = songId
+                        });
+                    }
                 }
             }
+            // Si SetlistSongs es null, no modificamos la relación canciones
 
             await _context.SaveChangesAsync();
-            return Ok(setlist.ToDto());
+
+            // Aquí recargamos el setlist incluyendo las relaciones necesarias para el DTO completo
+            var updatedSetlist = await _context.Setlists
+                .Include(s => s.SetlistSongs)
+                    .ThenInclude(ss => ss.Song)
+                        .ThenInclude(song => song.AudioFiles)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            return Ok(updatedSetlist.ToDto());
         }
 
         // GET: api/Setlist/{id}
@@ -125,6 +191,33 @@ namespace api.Controllers
 
             _context.Setlists.Remove(setlist);
             await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpPost("{setlistId}/AddSongs")]
+        public async Task<IActionResult> AddSongsToSetlist(int setlistId, [FromBody] List<int> songIds)
+        {
+            var setlist = await _context.Setlists
+                .Include(s => s.SetlistSongs)
+                .FirstOrDefaultAsync(s => s.Id == setlistId);
+
+            if (setlist == null)
+                return NotFound();
+
+            foreach (var songId in songIds)
+            {
+                if (!setlist.SetlistSongs.Any(ss => ss.SongId == songId))
+                {
+                    setlist.SetlistSongs.Add(new SetlistSong
+                    {
+                        SetlistId = setlistId,
+                        SongId = songId
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
     }

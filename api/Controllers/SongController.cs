@@ -4,6 +4,9 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using api.Data;
+using api.Dtos.AudioFile;
+using api.Dtos.Song;
+using api.Mappers;
 using api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +19,7 @@ namespace api.Controllers
     public class SongController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        
+
         // Directorio base para las imágenes
         private readonly string _imageUploadDirectory = Path.Combine(
             Directory.GetCurrentDirectory(),
@@ -44,121 +47,120 @@ namespace api.Controllers
                 Directory.CreateDirectory(_audioUploadDirectory);
             }
         }
-/*
-        // POST: api/Song/create-song
-        [HttpPost("create-song")]
-        public async Task<IActionResult> CreateSong(
-            [FromForm] string SongName,
-            [FromForm] string Artist,
-            [FromForm] int BPM,
-            [FromForm] string Tone,
-            [FromForm] IFormFile zipFile,
-            [FromForm] IFormFile coverImage
-        )
-        {
-            if (BPM < 40 || BPM > 280)
-            {
-                return BadRequest("El BPM debe estar entre 40 y 280.");
-            }
-
-            // Validación de archivos
-            if (zipFile == null || zipFile.Length == 0)
-            {
-                return BadRequest("No se ha enviado ningún archivo .zip.");
-            }
-
-            if (coverImage == null || coverImage.Length == 0)
-            {
-                return BadRequest("No se ha enviado la imagen de portada.");
-            }
-
-            // Validar que el archivo es un .zip
-            if (Path.GetExtension(zipFile.FileName).ToLower() != ".zip")
-            {
-                return BadRequest("El archivo debe ser un .zip.");
-            }
-
-            // Validar que el archivo de imagen sea de tipo .jpg, .jpeg, o .png
-            var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            var imageExtension = Path.GetExtension(coverImage.FileName).ToLower();
-            if (!allowedImageExtensions.Contains(imageExtension))
-            {
-                return BadRequest("El archivo de imagen debe ser .jpg, .jpeg o .png.");
-            }
-
-            // Guardar la imagen de portada
-            var uniqueImageFileName = Guid.NewGuid().ToString() + imageExtension;
-            var imagePath = Path.Combine(_imageUploadDirectory, uniqueImageFileName);
-
-            using (var imageStream = new FileStream(imagePath, FileMode.Create))
-            {
-                await coverImage.CopyToAsync(imageStream);
-            }
-
-            // Crear la canción en la base de datos, asignando la fecha de creación a la actual
-            var song = new Song
-            {
-                SongName = SongName,
-                Artist = Artist,
-                BPM = BPM,
-                Tone = Tone,
-                CreatedAt = DateTime.UtcNow, // Asignar la fecha y hora actual en UTC
-                CoverImage = imagePath
-            };
-
-            _context.Songs.Add(song);
-            await _context.SaveChangesAsync();
-
-            // Crear un directorio específico para los archivos de audio de esta canción
-            var songAudioDirectory = Path.Combine(_audioUploadDirectory, song.Id.ToString());
-            if (!Directory.Exists(songAudioDirectory))
-            {
-                Directory.CreateDirectory(songAudioDirectory);
-            }
-
-            // Extraer los archivos del .zip
-            using (var stream = zipFile.OpenReadStream())
-            using (var zip = new ZipArchive(stream, ZipArchiveMode.Read))
-            {
-                foreach (var entry in zip.Entries)
+        /* CREATE SONG METHOD
+                // POST: api/Song/create-song
+                [HttpPost("create-song")]
+                public async Task<IActionResult> CreateSong(
+                    [FromForm] string SongName,
+                    [FromForm] string Artist,
+                    [FromForm] int BPM,
+                    [FromForm] string Tone,
+                    [FromForm] IFormFile zipFile,
+                    [FromForm] IFormFile coverImage
+                )
                 {
-                    var fileExtension = Path.GetExtension(entry.FullName).ToLower();
-                    if (fileExtension != ".mp3" && fileExtension != ".wav")
+                    if (BPM < 40 || BPM > 280)
                     {
-                        continue; // Solo procesar .mp3 y .wav
+                        return BadRequest("El BPM debe estar entre 40 y 280.");
                     }
 
-                    // Generar un nombre único para el archivo de audio
-                    var uniqueFileName = Guid.NewGuid().ToString() + fileExtension;
-                    var filePath = Path.Combine(songAudioDirectory, uniqueFileName);
-
-                    // Guardar el archivo de audio
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    if (zipFile == null || zipFile.Length == 0)
                     {
-                        await entry.Open().CopyToAsync(fileStream);
+                        return BadRequest("No se ha enviado ningún archivo .zip.");
                     }
 
-                    // Guardar la información del archivo de audio en la base de datos
-                    var audioFileRecord = new AudioFile
+                    if (coverImage == null || coverImage.Length == 0)
                     {
-                        FileName = uniqueFileName,
-                        FilePath = filePath,
-                        FileExtension = fileExtension,
-                        FileSize = entry.Length,
-                        SongId = song.Id, // Asociar el archivo directamente con la canción
+                        return BadRequest("No se ha enviado la imagen de portada.");
+                    }
+
+                    if (Path.GetExtension(zipFile.FileName).ToLower() != ".zip")
+                    {
+                        return BadRequest("El archivo debe ser un .zip.");
+                    }
+
+                    var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                    var imageExtension = Path.GetExtension(coverImage.FileName).ToLower();
+                    if (!allowedImageExtensions.Contains(imageExtension))
+                    {
+                        return BadRequest("El archivo de imagen debe ser .jpg, .jpeg o .png.");
+                    }
+
+                    var uniqueImageFileName = Guid.NewGuid().ToString() + imageExtension;
+                    var imagePath = Path.Combine(_imageUploadDirectory, uniqueImageFileName);
+
+                    using (var imageStream = new FileStream(imagePath, FileMode.Create))
+                    {
+                        await coverImage.CopyToAsync(imageStream);
+                    }
+
+                    var song = new Song
+                    {
+                        SongName = SongName,
+                        Artist = Artist,
+                        BPM = BPM,
+                        Tone = Tone,
+                        CreatedAt = DateTime.UtcNow,
+                        CoverImage = imagePath
                     };
 
-                    _context.AudioFiles.Add(audioFileRecord);
+                    _context.Songs.Add(song);
+                    await _context.SaveChangesAsync();
+
+                    var songAudioDirectory = Path.Combine(_audioUploadDirectory, song.Id.ToString());
+                    if (!Directory.Exists(songAudioDirectory))
+                    {
+                        Directory.CreateDirectory(songAudioDirectory);
+                    }
+
+                    using (var stream = zipFile.OpenReadStream())
+                    using (var zip = new ZipArchive(stream, ZipArchiveMode.Read))
+                    {
+                        foreach (var entry in zip.Entries)
+                        {
+                            var fileExtension = Path.GetExtension(entry.FullName).ToLower();
+                            if (fileExtension != ".mp3" && fileExtension != ".wav")
+                            {
+                                continue;
+                            }
+
+                            var uniqueFileName = Guid.NewGuid().ToString() + fileExtension;
+                            var filePath = Path.Combine(songAudioDirectory, uniqueFileName);
+
+                            using (var fileStream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await entry.Open().CopyToAsync(fileStream);
+                            }
+
+                            var audioFileRecord = new AudioFile
+                            {
+                                FileName = uniqueFileName,
+                                FilePath = filePath,
+                                FileExtension = fileExtension,
+                                FileSize = entry.Length,
+                                SongId = song.Id,
+                            };
+
+                            _context.AudioFiles.Add(audioFileRecord);
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    // Cargar la canción con sus archivos para devolverla correctamente
+                    var createdSong = await _context.Songs
+                        .Where(s => s.Id == song.Id)
+                        .Include(s => s.AudioFiles)
+                        .FirstOrDefaultAsync();
+
+                    if (createdSong == null)
+                        return NotFound("No se pudo recuperar la canción creada.");
+
+                    var songDto = createdSong.ToDto(); // Usa tu mapper para convertir a DTO
+
+                    return Ok(new { song = songDto });
                 }
-            }
-
-            // Guardar los registros de archivos de audio en la base de datos
-            await _context.SaveChangesAsync();
-
-            return Ok("Canción creada, imagen de portada subida y archivos de audio asociados correctamente.");
-        }
-*/
-
+        */
         // GET: api/Song/get-songs
         [HttpGet("get-songs")]
         public async Task<IActionResult> GetSongs()
@@ -166,6 +168,7 @@ namespace api.Controllers
             try
             {
                 var songs = await _context.Songs
+                    .Include(s => s.AudioFiles) // Incluye archivos de audio relacionados
                     .Select(s => new
                     {
                         s.Id,
@@ -173,8 +176,16 @@ namespace api.Controllers
                         s.Artist,
                         s.BPM,
                         s.Tone,
-                        CoverImage = Path.GetFileName(s.CoverImage), // Solo el nombre del archivo
-                        s.CreatedAt
+                        CoverImage = Path.GetFileName(s.CoverImage), // Solo nombre del archivo
+                        s.CreatedAt,
+                        AudioFiles = s.AudioFiles.Select(a => new
+                        {
+                            a.Id,
+                            a.FileName,
+                            a.FileExtension,
+                            a.FileSize,
+                            a.SongId
+                        }).ToList()
                     })
                     .ToListAsync();
 
@@ -183,11 +194,10 @@ namespace api.Controllers
                     return NotFound("No se encontraron canciones.");
                 }
 
-                return Ok(songs);
+                return Ok(new { songs });
             }
             catch (Exception ex)
             {
-                // Log de error
                 Console.WriteLine($"Error al obtener canciones: {ex.Message}");
                 return StatusCode(500, "Error interno del servidor");
             }
@@ -200,7 +210,7 @@ namespace api.Controllers
             try
             {
                 var song = await _context.Songs
-                    .Include(s => s.AudioFiles) // Incluir archivos de audio relacionados
+                    .Include(s => s.AudioFiles)
                     .FirstOrDefaultAsync(s => s.Id == id);
 
                 if (song == null)
@@ -208,34 +218,35 @@ namespace api.Controllers
                     return NotFound("Canción no encontrada.");
                 }
 
-                var songDetails = new
+                // Usar el mapper para crear el DTO
+                var songDto = new SongDto
                 {
-                    song.Id,
-                    song.SongName,
-                    song.Artist,
-                    song.BPM,
-                    song.Tone,
-                    CoverImage = Path.GetFileName(song.CoverImage), // Solo el nombre del archivo
-                    song.CreatedAt,
-                    AudioFiles = song.AudioFiles.Select(a => new
+                    Id = song.Id,
+                    SongName = song.SongName,
+                    Artist = song.Artist,
+                    BPM = song.BPM,
+                    Tone = song.Tone,
+                    CoverImage = song.CoverImage,
+                    CreatedAt = song.CreatedAt,
+                    AudioFiles = song.AudioFiles.Select(af => new AudioFileDto
                     {
-                        a.Id,
-                        a.FileName,
-                        a.FilePath,
-                        a.FileExtension,
-                        a.FileSize
-                    })
+                        Id = af.Id,
+                        FileName = af.FileName,
+                        FileExtension = af.FileExtension,
+                        FileSize = af.FileSize,
+                        SongId = af.SongId
+                    }).ToList()
                 };
 
-                return Ok(songDetails);
+                return Ok(new { song = songDto });
             }
             catch (Exception ex)
             {
-                // Log de error
                 Console.WriteLine($"Error al obtener la canción: {ex.Message}");
                 return StatusCode(500, "Error interno del servidor");
             }
         }
+
         // DELETE: api/Song/delete-song/{id}
         [HttpDelete("delete-song/{id}")]
         public async Task<IActionResult> DeleteSong(int id)
@@ -288,8 +299,8 @@ namespace api.Controllers
                 return StatusCode(500, "Error interno del servidor");
             }
         }
- 
-/*
+
+        /* UPDATE SONG METHOD
         // PUT: api/Song/update-song/{id}
         [HttpPut("update-song/{id}")]
         public async Task<IActionResult> UpdateSong(
@@ -306,22 +317,23 @@ namespace api.Controllers
                 return BadRequest("El BPM debe estar entre 40 y 280.");
             }
 
-            // Validación de archivos
-            if (coverImage == null || coverImage.Length == 0)
-            {
-                return BadRequest("No se ha enviado la imagen de portada.");
-            }
-
-            // Validar que el archivo de imagen sea de tipo .jpg, .jpeg, o .png
             var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            var imageExtension = Path.GetExtension(coverImage.FileName).ToLower();
-            if (!allowedImageExtensions.Contains(imageExtension))
+            string imageExtension = null;
+
+            if (coverImage != null && coverImage.Length > 0)
             {
-                return BadRequest("El archivo de imagen debe ser .jpg, .jpeg o .png.");
+                imageExtension = Path.GetExtension(coverImage.FileName).ToLower();
+                if (!allowedImageExtensions.Contains(imageExtension))
+                {
+                    return BadRequest("El archivo de imagen debe ser .jpg, .jpeg o .png.");
+                }
             }
 
-            // Buscar la canción en la base de datos
-            var song = await _context.Songs.FindAsync(id);
+            // Buscar la canción en la base de datos con archivos asociados
+            var song = await _context.Songs
+                .Include(s => s.AudioFiles)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
             if (song == null)
             {
                 return NotFound("Canción no encontrada.");
@@ -344,8 +356,8 @@ namespace api.Controllers
                     await coverImage.CopyToAsync(imageStream);
                 }
 
-                // Eliminar la imagen anterior del sistema de archivos
-                if (System.IO.File.Exists(song.CoverImage))
+                // Eliminar la imagen anterior del sistema de archivos si existe
+                if (!string.IsNullOrEmpty(song.CoverImage) && System.IO.File.Exists(song.CoverImage))
                 {
                     System.IO.File.Delete(song.CoverImage);
                 }
@@ -355,7 +367,11 @@ namespace api.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok("Canción actualizada correctamente.");
-        }*/
+            // Mapear a DTO y devolver
+            var songDto = song.ToDto();
+
+            return Ok(new { song = songDto });
+        }
+*/
     }
 }

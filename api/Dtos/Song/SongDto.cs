@@ -1,3 +1,5 @@
+using api.Dtos.AudioFile;
+
 namespace api.Dtos.Song
 {
     public class SongDto
@@ -7,7 +9,8 @@ namespace api.Dtos.Song
         public string Artist { get; set; }
         public int BPM { get; set; }
         public string Tone { get; set; }
-        public string CoverImage { get; set; } // Ruta de la imagen de portada
+        public string CoverImage { get; set; }
         public DateTime CreatedAt { get; set; }
+        public List<AudioFileDto> AudioFiles { get; set; }
     }
 }
