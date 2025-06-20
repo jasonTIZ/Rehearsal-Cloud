@@ -1,12 +1,13 @@
 using api.Dtos.Song;
+using api.Dtos.AudioFile;
 using api.Models;
+using System.Linq;
 
 namespace api.Mappers
 {
     public static class SongMapper
     {
-
-        // Mapea de Song a un DTO de respuesta para obtener los datos de una canción
+        // Mapea de Song a un DTO de respuesta para obtener los datos de una canción, incluyendo AudioFiles
         public static SongDto ToDto(this Song song)
         {
             return new SongDto
@@ -17,7 +18,15 @@ namespace api.Mappers
                 BPM = song.BPM,
                 Tone = song.Tone,
                 CoverImage = song.CoverImage,
-                CreatedAt = song.CreatedAt
+                CreatedAt = song.CreatedAt,
+                AudioFiles = song.AudioFiles?.Select(af => new AudioFileDto
+                {
+                    Id = af.Id,
+                    FileName = af.FileName,
+                    FileExtension = af.FileExtension,
+                    FileSize = af.FileSize,
+                    SongId = af.SongId
+                }).ToList()
             };
         }
 
