@@ -1,2 +1,4 @@
 api.csproj
 *.dll 
+bin/
+obj/
