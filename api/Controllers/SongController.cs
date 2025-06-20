@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using api.Data;
 using api.Models;
+using api.Dtos.Song;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -44,43 +45,35 @@ namespace api.Controllers
                 Directory.CreateDirectory(_audioUploadDirectory);
             }
         }
-/*
+
         // POST: api/Song/create-song
         [HttpPost("create-song")]
-        public async Task<IActionResult> CreateSong(
-            [FromForm] string SongName,
-            [FromForm] string Artist,
-            [FromForm] int BPM,
-            [FromForm] string Tone,
-            [FromForm] IFormFile zipFile,
-            [FromForm] IFormFile coverImage
-        )
+        public async Task<IActionResult> CreateSong([FromForm] CreateSongRequestDto request)
         {
-            if (BPM < 40 || BPM > 280)
+            if (request.BPM < 40 || request.BPM > 280)
             {
                 return BadRequest("El BPM debe estar entre 40 y 280.");
             }
 
-            // Validación de archivos
-            if (zipFile == null || zipFile.Length == 0)
+            if (request.ZipFile == null || request.ZipFile.Length == 0)
             {
                 return BadRequest("No se ha enviado ningún archivo .zip.");
             }
 
-            if (coverImage == null || coverImage.Length == 0)
+            if (request.CoverImage == null || request.CoverImage.Length == 0)
             {
                 return BadRequest("No se ha enviado la imagen de portada.");
             }
 
             // Validar que el archivo es un .zip
-            if (Path.GetExtension(zipFile.FileName).ToLower() != ".zip")
+            if (Path.GetExtension(request.ZipFile.FileName).ToLower() != ".zip")
             {
                 return BadRequest("El archivo debe ser un .zip.");
             }
 
             // Validar que el archivo de imagen sea de tipo .jpg, .jpeg, o .png
             var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            var imageExtension = Path.GetExtension(coverImage.FileName).ToLower();
+            var imageExtension = Path.GetExtension(request.CoverImage.FileName).ToLower();
             if (!allowedImageExtensions.Contains(imageExtension))
             {
                 return BadRequest("El archivo de imagen debe ser .jpg, .jpeg o .png.");
@@ -92,17 +85,17 @@ namespace api.Controllers
 
             using (var imageStream = new FileStream(imagePath, FileMode.Create))
             {
-                await coverImage.CopyToAsync(imageStream);
+                await request.CoverImage.CopyToAsync(imageStream);
             }
 
-            // Crear la canción en la base de datos, asignando la fecha de creación a la actual
+            // Crear la canción en la base de datos
             var song = new Song
             {
-                SongName = SongName,
-                Artist = Artist,
-                BPM = BPM,
-                Tone = Tone,
-                CreatedAt = DateTime.UtcNow, // Asignar la fecha y hora actual en UTC
+                SongName = request.SongName,
+                Artist = request.Artist,
+                BPM = request.BPM,
+                Tone = request.Tone,
+                CreatedAt = DateTime.UtcNow,
                 CoverImage = imagePath
             };
 
@@ -117,7 +110,7 @@ namespace api.Controllers
             }
 
             // Extraer los archivos del .zip
-            using (var stream = zipFile.OpenReadStream())
+            using (var stream = request.ZipFile.OpenReadStream())
             using (var zip = new ZipArchive(stream, ZipArchiveMode.Read))
             {
                 foreach (var entry in zip.Entries)
@@ -125,39 +118,35 @@ namespace api.Controllers
                     var fileExtension = Path.GetExtension(entry.FullName).ToLower();
                     if (fileExtension != ".mp3" && fileExtension != ".wav")
                     {
-                        continue; // Solo procesar .mp3 y .wav
+                        continue;
                     }
 
-                    // Generar un nombre único para el archivo de audio
                     var uniqueFileName = Guid.NewGuid().ToString() + fileExtension;
                     var filePath = Path.Combine(songAudioDirectory, uniqueFileName);
 
-                    // Guardar el archivo de audio
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         await entry.Open().CopyToAsync(fileStream);
                     }
 
-                    // Guardar la información del archivo de audio en la base de datos
                     var audioFileRecord = new AudioFile
                     {
                         FileName = uniqueFileName,
                         FilePath = filePath,
                         FileExtension = fileExtension,
                         FileSize = entry.Length,
-                        SongId = song.Id, // Asociar el archivo directamente con la canción
+                        SongId = song.Id,
                     };
 
                     _context.AudioFiles.Add(audioFileRecord);
                 }
             }
 
-            // Guardar los registros de archivos de audio en la base de datos
             await _context.SaveChangesAsync();
 
             return Ok("Canción creada, imagen de portada subida y archivos de audio asociados correctamente.");
         }
-*/
+
 
         // GET: api/Song/get-songs
         [HttpGet("get-songs")]
