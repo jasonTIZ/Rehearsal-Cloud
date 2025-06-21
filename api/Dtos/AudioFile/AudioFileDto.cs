@@ -7,5 +7,6 @@ namespace api.Dtos.AudioFile
         public string FileExtension { get; set; }
         public long FileSize { get; set; }
         public int SongId { get; set; }
+        public string FileUrl { get; set; }
     }
 }

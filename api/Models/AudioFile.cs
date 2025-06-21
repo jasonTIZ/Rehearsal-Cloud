@@ -7,9 +7,7 @@ namespace api.Models
         public string FilePath { get; set; }
         public string FileExtension { get; set; }
         public long FileSize { get; set; }
-
-        // Clave foránea de la canción
         public int SongId { get; set; }
-        public Song Song { get; set; } // Relación con Song
+        public Song Song { get; set; }
     }
 }
