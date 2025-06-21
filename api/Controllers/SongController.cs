@@ -30,8 +30,9 @@ namespace api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSongs()
         {
-            var songs = await _context.Songs.ToListAsync();
-            var songDtos = songs.Select(s => s.ToLightweightDto()).ToList();
+            var songs = await _context.Songs.Include(s => s.AudioFiles).ToListAsync();
+
+            var songDtos = songs.Select(s => s.ToDto()).ToList(); // Ahora sí incluye los audios
             return Ok(songDtos);
         }
 
