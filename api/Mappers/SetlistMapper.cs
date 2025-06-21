@@ -34,8 +34,9 @@ namespace api.Mappers
                             FileName = af.FileName,
                             FileExtension = af.FileExtension,
                             FileSize = af.FileSize,
-                            SongId = af.SongId
-                        }).ToList()
+                            SongId = af.SongId,
+                            FileUrl = af.Id > 0 ? $"/api/Song/{ss.Song.Id}/audio/{af.Id}" : null // Ensure valid ID
+                        }).Where(af => af.FileUrl != null).ToList() // Filter out null FileUrl
                     } : null
                 }).ToList()
             };
