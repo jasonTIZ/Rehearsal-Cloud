@@ -1,5 +1,4 @@
 using api.Dtos.AudioFile;
-
 namespace api.Dtos.Song
 {
     public class SongDto
@@ -11,6 +10,6 @@ namespace api.Dtos.Song
         public string Tone { get; set; }
         public string CoverImage { get; set; }
         public DateTime CreatedAt { get; set; }
-        public List<AudioFileDto> AudioFiles { get; set; }
+        public List<AudioFileDto>? AudioFiles { get; set; }
     }
 }
