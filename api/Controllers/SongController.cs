@@ -251,9 +251,9 @@ namespace api.Controllers
                 .Include(s => s.AudioFiles)
                 .FirstOrDefaultAsync(s => s.Id == id);
             if (song == null)
-                return NotFound();
+                return NotFound(new { message = "Canción no encontrada." });
 
-            // Delete audio files
+            // Eliminar archivos de audio
             foreach (var audioFile in song.AudioFiles)
             {
                 if (System.IO.File.Exists(audioFile.FilePath))
@@ -261,15 +261,16 @@ namespace api.Controllers
             }
             var songAudioDirectory = Path.Combine(_audioUploadDirectory, song.Id.ToString());
             if (Directory.Exists(songAudioDirectory))
-                Directory.Delete(songAudioDirectory);
+                Directory.Delete(songAudioDirectory, true);
 
-            // Delete cover image
+            // Eliminar imagen de portada
             if (!string.IsNullOrEmpty(song.CoverImage) && System.IO.File.Exists(song.CoverImage))
                 System.IO.File.Delete(song.CoverImage);
 
             _context.Songs.Remove(song);
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            return Ok(new { message = "Canción eliminada correctamente." });
         }
     }
 }
